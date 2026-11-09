@@ -40,7 +40,8 @@ Email (eml_)
 - status: draft | scheduled | queued | sending | sent
           -> delivered | bounced | complained | failed; inbound is received
 - outbound: suppressed[] (recipients dropped), pacing (non-null while held)
-- inbound: category, stripped_text, verdicts, verification, unavailable
+- inbound: delivered_to (your addresses it arrived at), category, stripped_text,
+           verdicts, verification, unavailable
 - attachments[] -> Attachment (att_), with prepared text for received PDFs
 Thread (thr_)
 - subject, participants, messages[] -> Email
@@ -72,7 +73,7 @@ Most mistakes come from reading more into a signal than it says.
 - **A send response** says an email was created and taken, with its `id` and `thread_id`. It does not say it was delivered. `suppressed` lists recipients that were dropped; a non-null `pacing` says it is held and until when.
 - **`email.sent`** says the sending provider accepted it. **`email.delivered`** says a delivery was reported. Neither says a person read it.
 - **`email.bounced`** reports a failed delivery per recipient. Only an address shown to be dead is suppressed for later sends.
-- **`email.received`** says mail arrived and which thread it joined. Its `category` (`human`, `out_of_office`, `auto_reply`, `bounce`, ...) is a classification, not proof of who wrote it.
+- **`email.received`** says mail arrived, which thread it joined, and in `delivered_to` which of your addresses it arrived at. `to` is what the sender wrote in the To header. An email that reaches another address of yours later is announced again with the same `email_id`. Its `category` (`human`, `out_of_office`, `auto_reply`, `bounce`, ...) is a classification, not proof of who wrote it.
 - **A valid webhook signature** proves the delivery came from AI Inbx. It says nothing about the email's content, which stays untrusted.
 
 ## Rules that hold everywhere

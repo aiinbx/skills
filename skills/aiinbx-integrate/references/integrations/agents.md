@@ -14,7 +14,7 @@ For coding-agent access to these docs, see [Documentation for agents](https://do
 
 Use the [production webhook handler](../guides/production.md#receive-events-durably) to verify and durably enqueue each event before returning `2xx`. Do not run a model inside the webhook request: delivery times out after 10 seconds.
 
-The example below is a **worker outline**, not a complete runnable application. `draftOnce` and `markHandled` are application functions. The job runner must deduplicate by event ID, recover abandoned work, and serialize processing per thread.
+The example below is a **worker outline**, not a complete runnable application. `draftOnce` and `markHandled` are application functions. The job runner must deduplicate by event ID, recover abandoned work, and serialize processing per thread. The answer is keyed on the email: `email.received` is sent again when the same email reaches another address of yours, and the email gets one answer.
 
 ```ts
 import AIInbx from "aiinbx"
@@ -35,7 +35,7 @@ async function handleEvent(event: WebhookEvent) {
   // Application-defined: evaluate policy, generate once, and persist the
   // approved request body before sending. Return that same body on retries.
   // Return null when a reply is not appropriate or needs human review.
-  const payload = await draftOnce(event.id, event.space_id, messages)
+  const payload = await draftOnce(event.data.email_id, event.space_id, messages)
   if (!payload) return
 
   // email_id: answer the email this event is about, even if more mail has
@@ -43,7 +43,7 @@ async function handleEvent(event: WebhookEvent) {
   const email = await aiinbx.threads.reply(
     event.data.thread_id,
     { ...payload, email_id: event.data.email_id },
-    { idempotencyKey: `reply-${event.id}` }
+    { idempotencyKey: `reply-${event.data.email_id}` }
   )
   await markHandled(event.id, email.id)
 }

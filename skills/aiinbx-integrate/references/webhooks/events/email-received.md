@@ -1,10 +1,10 @@
 # email.received
 
-email.received fires once per inbound message, already matched onto its thread. The event most AI Inbx applications are built around.
+email.received fires for every inbound message, already matched onto its thread, and names the addresses of yours it arrived at. The event most AI Inbx applications are built around.
 
 From https://docs.aiinbx.com/webhooks/events/email-received
 
-Inbound mail. The one most applications are built around — it fires once per received message, with the thread it belongs to already resolved.
+Inbound mail. The one most applications are built around — it fires once per received message, and again when that message reaches another address of yours later, with the thread it belongs to already resolved and the addresses of yours it arrived at in `delivered_to`.
 
 ## Payload
 
@@ -29,6 +29,19 @@ if (event.type === "email.received" && event.data.category === "human") {
   await queueReply(event.data.thread_id, email.stripped_text)
 }
 ```
+## Which address it arrived at
+
+`to` and the email's `cc` are what the sender wrote. `delivered_to` is where the mail arrived: the receiving server's recipients on a domain, the mailbox and the aliases the mail is written to on a connected mailbox. Route on `delivered_to` — an address of yours that was only copied or blind-copied is there, and an address the sender merely named in a header is not.
+
+```ts
+if (event.type === "email.received") {
+  for (const address of event.data.delivered_to) {
+    await inboxFor(address).handle(event.data.email_id)
+  }
+}
+```
+Every address of yours a message reaches is in exactly one `email.received`. Mail servers can deliver one message in several rounds — a blind copy often travels on its own — so when the same email reaches another address of yours later, the event is sent again with the same `email_id` and only the new addresses in `delivered_to`. A handler that acts once per email deduplicates on `email_id`; one that acts per address handles each event as it comes. The email itself lists them all in its own `delivered_to`.
+
 > [!TIP]
 > Gate on `category === "human"` before letting an agent reply. Without it, an out-of-office autoresponder and your bot will happily talk to each other.
 

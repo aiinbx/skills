@@ -28,7 +28,7 @@ Once the MX record resolves, mail to any address on the domain is accepted, pars
 > [!TIP]
 > **Plus addressing**
 >
-> Every address on the domain is live, so you can encode routing into the local part — `reply+ord_8812@yourapp.com` — and read it back off `data.to` in the webhook. Nothing to register per address.
+> Every address on the domain is live, so you can encode routing into the local part — `reply+ord_8812@yourapp.com` — and read it back off `data.delivered_to` in the webhook. Nothing to register per address.
 
 ## Receiving through a connected mailbox
 
@@ -64,6 +64,7 @@ A received message is delivered as an `email.received` event whose `data` carrie
     "mailbox_id": null,
     "from": "grace@example.com",
     "to": ["support@yourapp.com"],
+    "delivered_to": ["support@yourapp.com"],
     "subject": "Re: Quick question",
     "snippet": "Thursday at 10 works for me…",
     "category": "human",
@@ -74,6 +75,8 @@ A received message is delivered as an `email.received` event whose `data` carrie
   }
 }
 ```
+`to` is the To header as the sender wrote it. `delivered_to` is the addresses of yours the mail arrived at, so an address that was only in Cc or Bcc is there. Route on it; [Which address it arrived at](https://docs.aiinbx.com/webhooks/events/email-received.md#which-address-it-arrived-at) has the rules.
+
 Retrieve the full message — bodies, headers, attachments, delivery events — with `emails.retrieve(data.email_id)`, or fetch the whole conversation with `threads.retrieve(data.thread_id)`. To skip that call, create the endpoint with [`payload: "full"`](../webhooks.md#full-payloads): the same event then carries the email as `data.email`, prepared attachment text included.
 
 ### What was written

@@ -79,7 +79,7 @@ Deduplicate by `event.id`, not by the signature or delivery timestamp. Signature
 
 No webhook concurrency setting guarantees event order. Use timestamps for your event history and retrieve the resource when you need current state. Do not overwrite newer state merely because an older event arrived later.
 
-For an automated conversation, serialize jobs per thread or use an application-level version check. Two different inbound events have different IDs and can otherwise produce overlapping replies. Before sending, check whether a person or another worker has already answered.
+For an automated conversation, serialize jobs per thread or use an application-level version check. Two different inbound events have different IDs and can otherwise produce overlapping replies. One email can also come in two events: `email.received` is sent again, with the same `email_id`, when the email reaches another address of yours later. Key what happens once per email, such as an answer, on `email_id`. Before sending, check whether a person or another worker has already answered.
 
 ## Enforce customer boundaries
 

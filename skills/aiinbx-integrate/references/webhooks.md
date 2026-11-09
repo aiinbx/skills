@@ -166,7 +166,7 @@ await aiinbx.webhookEndpoints.create({
   ],
 })
 ```
-`field` is `from`, `to`, or `either`. A `from` rule matches the sender and any Reply-To address; a `to` rule matches every recipient — To, Cc and Bcc — so a pattern like `*@acme.dev` follows that company's people whether they were addressed, copied or blind-copied. Two rules decide everything:
+`field` is `from`, `to`, or `either`. A `from` rule matches the sender and any Reply-To address; a `to` rule matches every recipient — To, Cc and Bcc, and on received mail the addresses of yours it arrived at (`delivered_to`) — so a pattern like `*@acme.dev` follows that company's people whether they were addressed, copied or blind-copied. Two rules decide everything:
 
 1. **Block wins**
 

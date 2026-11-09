@@ -227,6 +227,7 @@ The example is an AI email assistant sold to businesses. Each customer gets `<cu
         "mailbox_id": null,
         "from": "grace@example.com",
         "to": ["assistant@acme.saas.com"],
+        "delivered_to": ["assistant@acme.saas.com"],
         "subject": "Re: Your meeting on Thursday",
         "snippet": "Works for me…",
         "category": "human"

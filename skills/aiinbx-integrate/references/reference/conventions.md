@@ -246,13 +246,13 @@ Keys are 1–255 characters and scoped to the workspace and the resolved space, 
 
 A replay returns the existing email without sending again. It does not repeat the original suppression or pacing evaluation: the replay’s `suppressed` is empty and `pacing` is null. Persist the first response if you need those original decisions. The key is stored with the email; do not rely on it as a permanent deduplication record after that email is deleted.
 
-**Reuse one key for every attempt of the same operation.** Derive it from a stable application identifier, such as `order-8812-receipt`, or generate a UUID once and persist it. Generating a new key on every retry creates separate operations. When you're reacting to a webhook, the event ID is already the stable thing:
+**Reuse one key for every attempt of the same operation.** Derive it from a stable application identifier, such as `order-8812-receipt`, or generate a UUID once and persist it. Generating a new key on every retry creates separate operations. When you're answering an email from a webhook, its `email_id` is already the stable thing:
 
 ```ts
 await aiinbx.threads.reply(
   threadId,
   { text },
-  { idempotencyKey: `reply-${event.id}` }
+  { idempotencyKey: `reply-${event.data.email_id}` }
 )
 ```
 ## Requests and responses
