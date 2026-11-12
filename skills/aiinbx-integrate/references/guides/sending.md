@@ -223,7 +223,7 @@ Only mail sent from a domain is tracked. Through a [connected mailbox](mailboxes
 ```
 ## Which space a send is in
 
-Nothing on the request names a [space](spaces.md). The email is in the space of the domain or mailbox `from` is on, and its thread with it — `space_id` on the response says which, `null` for the workspace itself. A workspace that has no spaces never sees anything else there.
+Nothing on the request names a [space](spaces.md). The email is in the space `from` is [assigned to](spaces.md#single-addresses-of-one-domain), else in the space of the domain or mailbox it is on, and its thread with it — `space_id` on the response says which, `null` for the workspace itself. A workspace that has no spaces never sees anything else there.
 
 Lists take `space` to narrow to one space:
 
@@ -252,7 +252,7 @@ Both of those need a thread, and a thread needs the message you're answering to 
 ```
 `in_reply_to` is the `Message-ID` of the message being answered and `references` the chain before it, oldest first — what the original's own `References` held, plus its `Message-ID`. Both are written to the wire, so the reply threads in the recipient's mail client; a chain that leaves `in_reply_to` out has it added at the end, where a mail client looks for it. Pass them with or without their angle brackets — `<CAF=abc123@mail.gmail.com>` reads the same — and the API gives them back without, as it does every Message-ID. Leave `references` out and it is `in_reply_to` alone. `references` without `in_reply_to` is accepted too, and writes no `In-Reply-To`.
 
-The email is then filed the way an inbound message with those headers would be: if one of the IDs is the `message_id` of an email in the same [space](spaces.md), the send joins that thread; if none is, it opens a new one — and the recipient's answer lands on it, because it names the `message_id` of what you sent.
+The email is then threaded the way an inbound message with those headers would be: if one of the IDs is the `message_id` of an email in the same [space](spaces.md), the send joins that thread; if none is, it opens a new one — and the recipient's answer lands on it, because it names the `message_id` of what you sent.
 
 `thread_id` already says what a send answers, so it can't be combined with either field: that is a `422` [`invalid_request`](../reference/errors.md#invalid_request). `threads.reply` and `threads.forward` don't take them at all. A [scheduled](scheduling.md) send keeps the headers you named, where one into a `thread_id` answers whatever is latest on the thread by the time it leaves.
 

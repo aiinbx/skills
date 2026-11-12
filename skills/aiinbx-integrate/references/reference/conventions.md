@@ -171,7 +171,7 @@ Every resource that can live in a [space](../guides/spaces.md) carries `space_id
 
 `null` is the workspace itself, not "unassigned". A resource created without a space belongs to the workspace and stays there — there is no move. A workspace that never creates a space reads `null` everywhere and can ignore the field.
 
-Mail inherits rather than declares: an email's `space_id` is that of the domain or mailbox it went through, and a thread's is its messages'. Nothing on a send names one.
+Mail inherits rather than declares: an email's `space_id` is that of the address it went through when that address is [assigned to a space](../guides/spaces.md#single-addresses-of-one-domain), else of its domain or mailbox, and a thread's is its messages'. Nothing on a send names one.
 
 Lists of resources that live in a space take `space`:
 

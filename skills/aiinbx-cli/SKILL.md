@@ -1,11 +1,11 @@
 ---
 name: aiinbx-cli
-description: "Operate AI Inbx from the terminal with the `aiinbx` CLI — send email (files, stdin, React Email templates), read threads and emails, manage domains, mailboxes, webhooks, suppressions and every other API resource; forward webhook events to localhost with `aiinbx listen`; block until an email arrives with `aiinbx wait` (OTP / verification flows, e2e tests); check DNS and setup with `aiinbx doctor`. Load this skill before running any `aiinbx` command: it holds the non-interactive contract, JSON output and exit codes."
+description: "Operate AI Inbx from the terminal with the `aiinbx` CLI — send email (files, stdin, React Email templates), read threads and emails, manage domains, spaces, assigned addresses, mailboxes, webhooks, suppressions and every other API resource; forward webhook events to localhost with `aiinbx listen`; block until an email arrives with `aiinbx wait` (OTP / verification flows, e2e tests); check DNS and setup with `aiinbx doctor`. Load this skill before running any `aiinbx` command: it holds the non-interactive contract, JSON output and exit codes."
 license: MIT
 metadata:
   author: aiinbx
   # Versioned apart from the CLI: bump on content changes, not releases.
-  version: "1.2.0"
+  version: "1.3.0"
   homepage: https://docs.aiinbx.com/cli
   source: https://github.com/aiinbx/skills
 inputs:
@@ -98,6 +98,21 @@ aiinbx attachments download att_123 --output invoice.pdf
 - Repeatable flags take one value each: `--to a@x.com --to b@x.com`.
 - Nested fields take JSON: `--tracking '{"opens":false}'`. `--data` takes the whole body (`@file.json`, `-` for stdin). Flags win over it.
 - Lists: `--limit`, `--cursor`, `--all`.
+- Booleans are switches: `--thread-across-addresses`, `--no-thread-across-addresses`. A nullable flag given `null` sends null.
+
+### Spaces and single addresses
+
+```bash
+aiinbx spaces create --name Acme --external-id cus_8812
+aiinbx domains create --name acme.yourapp.com --space-id spc_123     # subdomain under *.yourapp.com
+aiinbx addresses assign --address anna@agents.com --space-id spc_123  # one address of a verified domain, no DNS
+aiinbx addresses list --space spc_123                                # one space's assigned addresses
+aiinbx addresses list --address anna@agents.com                      # where one address is assigned
+aiinbx addresses remove anna@agents.com --yes                        # back in its domain's space
+aiinbx spaces update spc_123 --thread-across-addresses               # guesses may join any thread of the space
+```
+
+From its next email on, an assigned address's mail, threads, send limits, sender reputation and suppression lists are its space's. Assigning it again moves it; `--space-id null` assigns it to the workspace itself. To choose between a customer's own domain, a subdomain and single addresses, see step 2 of `aiinbx-integrate`.
 
 ### Send
 

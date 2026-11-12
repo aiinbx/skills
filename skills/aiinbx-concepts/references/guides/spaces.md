@@ -4,7 +4,7 @@ Group a workspace's domains, mailboxes and mail by customer — one space each �
 
 From https://docs.aiinbx.com/guides/spaces
 
-A **space** is a group inside a workspace — one per customer, typically. It owns domains and mailboxes, and with them every email and thread that went through those. Pacing rules and suppression lists can be put in a space too; then they reach that space alone. New API keys and webhook endpoints stay yours: your servers hold the credential and receive every space's events.
+A **space** is a group inside a workspace — one per customer, typically. It owns domains, mailboxes and single addresses assigned to it, and with them every email and thread that went through those. Pacing rules and suppression lists can be put in a space too; then they reach that space alone. New API keys and webhook endpoints stay yours: your servers hold the credential and receive every space's events.
 
 Spaces are optional. A workspace that is not a platform never creates one, and every space-aware resource it has reads `space_id: null` — the workspace itself. Nothing on this page applies until you create a space.
 
@@ -12,7 +12,7 @@ Spaces are optional. A workspace that is not a platform never creates one, and e
 
 You are a platform if your customers each have addresses of their own and must not see each other's mail. Then:
 
-- Each customer gets a space, and a domain or mailbox in it.
+- Each customer gets a space, and a domain, a mailbox or single addresses in it — [Which to give each customer](#which-to-give-each-customer) picks one.
 - Their mail lands in that space. Two of your customers on the same email — the same `Message-ID` — each get their own copy, and a reply is threaded inside its space and never across.
 - A pacing rule and a suppression list can be per customer, while yours stay workspace-wide and apply to everyone.
 - Sending reputation is per customer too: a space that bounces is paused by itself while the rest keep sending. See [One reputation per space](#one-reputation-per-space).
@@ -20,27 +20,39 @@ You are a platform if your customers each have addresses of their own and must n
 
 You do not need one if every address in the workspace is yours, or if the separation you want is between campaigns rather than between customers — [suppression keys](suppressions.md#keys) and [webhook routing](../webhooks.md#routing) already do that without a second object.
 
+## Which to give each customer
+
+| When                                                                                                                        | Use                                                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| The customer brings their own domain: they have DNS access and want their brand and their own reputation.                   | [Their domain](domains.md), added in the customer's space.                                                                             |
+| Each customer should get a name of their own, or any number of addresses, without you touching DNS per customer.            | [A subdomain under your wildcard](domains.md#wildcards-and-subdomains) — `acme.saas.com` under `*.saas.com` — in the customer's space. |
+| Each customer, or each agent, has one or a few addresses on a domain you already have: `anna@agents.com`, `bob@agents.com`. | [Single addresses](#single-addresses-of-one-domain), each assigned to its space.                                                            |
+
+One customer can have any mix of the three. When several addresses of one space write to the same contacts — a sales or outreach team — turn on [`thread_across_addresses`](threads.md#which-thread-incoming-mail-joins) for that space.
+
 ## How mail finds its space
 
-Mail is never told its space. An email is in the space of the domain or mailbox it was sent from or received on; a reply is in its thread's space. So a space is decided once, when a domain or mailbox is put in it, and everything after that follows.
+Mail is never told its space. An email is in the space of the address it was sent from or received on when that address is [assigned to a space](#single-addresses-of-one-domain), else of its domain or mailbox; a reply is in its thread's space. So a space is decided when a domain, mailbox or address is put in it, and everything after that follows.
 
 - workspace/
   - *.saas.com  (wildcard domain, space_id: null)
+  - agents.com  (domain, space_id: null)
   - Acme  (spc_…)/
     - acme.saas.com  (subdomain)
     - acme.com  (their own domain)
     - tom@acme.com  (their Gmail)
+    - anna@agents.com  (assigned address)
     - every email and thread through those
   - Globex  (spc_…)/
     - globex.saas.com
 
-Everything created without a `space_id` belongs to the workspace itself. That includes the wildcard above: it is yours, and the subdomains under it are your customers'.
+Everything created without a `space_id` belongs to the workspace itself. That includes the wildcard and `agents.com` above: they are yours, and the subdomains under the wildcard and the addresses assigned on `agents.com` are your customers'.
 
 ### One address, one space
 
 An address belongs to one space at a time, so a conversation never splits across two:
 
-- **A domain decides its addresses' space.** While `acme.com` is verified in Acme's space, a mailbox on `tom@acme.com` can only be connected there. Connecting it in another space fails with `409` [`mailbox_space_conflict`](https://docs.aiinbx.com/reference/errors.md#mailbox_space_conflict).
+- **A domain decides its addresses' space**, except an address [assigned to a space of its own](#single-addresses-of-one-domain). While `acme.com` is verified in Acme's space, a mailbox on `tom@acme.com` can only be connected there. Connecting it in another space fails with `409` [`mailbox_space_conflict`](https://docs.aiinbx.com/reference/errors.md#mailbox_space_conflict).
 - **Names change hands.** When a customer lets `acme.com` lapse and someone else buys it, add it in the new customer's space. That works even though the old space still has the name. Whoever's DKIM record DNS carries sends and receives as it, exactly as between workspaces — see [Moving a domain](domains.md#moving-a-domain-between-spaces-and-workspaces). The old space keeps its mail, and anything still scheduled or queued there fails instead of going out as the new owner.
 - **So do mailboxes.** Connecting a different Google or Microsoft account on an address already connected in another space disconnects the old one, because the address belongs to the new account now.
 
@@ -212,7 +224,7 @@ The example is an AI email assistant sold to businesses. Each customer gets `<cu
 
 6. **Read the space off the webhook**
 
-    Grace's reply arrives on the wildcard's MX, is filed under `acme.saas.com`, and is threaded inside Acme's space. Every event names it on the envelope:
+    Grace's reply arrives on the wildcard's MX, reaches `acme.saas.com`, and is threaded inside Acme's space. Every event names it on the envelope:
 
     ```json
     {
@@ -264,7 +276,7 @@ The example is an AI email assistant sold to businesses. Each customer gets `<cu
 
 8. **They connect Gmail**
 
-    For the assistant to answer from a person's existing inbox, connect the mailbox into the space. Only the server-side call takes `space_id`: the hosted page and a plain connect link are opened with no credential, so they cannot name a space — anyone could file a mailbox into another customer's. The URL this call returns is bound to the space, which is why a platform mints it per customer and redirects to it, rather than handing out the bare hosted link.
+    For the assistant to answer from a person's existing inbox, connect the mailbox into the space. Only the server-side call takes `space_id`: the hosted page and a plain connect link are opened with no credential, so they cannot name a space — anyone could put a mailbox into another customer's. The URL this call returns is bound to the space, which is why a platform mints it per customer and redirects to it, rather than handing out the bare hosted link.
 
     ```ts TypeScript
     const { url } = await aiinbx.mailboxes.connect({
@@ -289,6 +301,66 @@ The example is an AI email assistant sold to businesses. Each customer gets `<cu
       }'
     ```
     [`mailbox.connected`](https://docs.aiinbx.com/webhooks/events/mailbox-connected.md) fires with the same `space_id`, and from then on mail synced from that account is Acme's.
+
+## Single addresses of one domain
+
+A subdomain per customer gives each customer a name of their own, and every address under it. When customers share one domain instead — `anna@agents.com` for Acme, `bob@agents.com` for Globex — assign each address to its customer's space. Nothing changes in DNS and nothing is verified: the domain still signs and carries the mail, and the address's space decides everything else.
+
+Assign single addresses when each customer, or each agent, has one or a few addresses on a domain you already have; use a subdomain when a customer needs a name of their own or any number of addresses. See [Which to give each customer](#which-to-give-each-customer).
+
+```ts TypeScript
+const assigned = await aiinbx.addresses.assign({
+  address: "anna@agents.com",
+  space_id: space.id,
+})
+
+console.log(assigned.space_id, assigned.domain_id) // "spc_...", the domain's "dom_..."
+
+// Where one address is assigned: a page with it, or none. One not listed is
+// where its untagged address is assigned, else in its domain's space.
+const [where] = await aiinbx.addresses
+  .list({ address: "anna@agents.com" })
+  .all()
+
+// One customer's addresses.
+const acme = await aiinbx.addresses.list({ space: space.id }).all()
+
+// Back in the domain's space.
+await aiinbx.addresses.remove("anna@agents.com")
+```
+```bash curl
+curl https://api.aiinbx.com/api/v2/addresses \
+  -H "Authorization: Bearer $AI_INBX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "address": "anna@agents.com", "space_id": "spc_..." }'
+
+curl "https://api.aiinbx.com/api/v2/addresses?address=anna%40agents.com" \
+  -H "Authorization: Bearer $AI_INBX_API_KEY"
+
+curl -X DELETE https://api.aiinbx.com/api/v2/addresses/anna%40agents.com \
+  -H "Authorization: Bearer $AI_INBX_API_KEY"
+```
+```json
+{
+  "address": "anna@agents.com",
+  "space_id": "spc_...",
+  "domain_id": "dom_...",
+  "created_at": "2026-11-11T09:12:41Z"
+}
+```
+The rules:
+
+- **The most specific wins.** An address assigned on its own is in its space; every other address on the domain is in the domain's space. A plus-tagged address — `anna+orders@agents.com` — goes where `anna@agents.com` goes, unless it is assigned itself.
+- **Assigning is optional.** An address that is not assigned works as before, in its domain's space.
+- **Assigning again moves it.** Mail it already has stays in the space it was in, with that space's suppression lists. Sends from it still queued or scheduled fail with [`sender_unknown`](https://docs.aiinbx.com/reference/errors.md#sender_unknown), as they do when a domain moves. Mail already on its way while it moves stays in the space it was headed to.
+- **An agent login stays where it connected.** One already connected to the address stays on the old space: it keeps reading the mail there and its sends are refused. Connect it again for the new space.
+- **Removing the assignment** puts the address back where its untagged address is assigned, else in its domain's space, from its next email on.
+- **An assignment counts under the domain entry it was made on.** [Moving the domain](domains.md#moving-a-domain-between-spaces-and-workspaces) to another space adds a new entry for the name. Once the next verification check moves sending and receiving to it, every address assigned on the old entry is back in the domain's space until it is assigned again. `GET /addresses` keeps listing those assignments until the old entry is deleted, which removes them.
+- **`space_id: null`** assigns it to the workspace itself.
+- **Events and emails carry the address's space.** `space_id` is the address's; `domain_id` stays the domain it is on.
+- **Sending follows the space too.** Sender reputation, pacing rules and suppression lists are those of the address's space.
+
+The domain has to be the workspace's and verified: an address on no domain of the workspace fails with `sender_unknown`, one on a domain still waiting on DNS with `409` [`domain_unverified`](https://docs.aiinbx.com/reference/errors.md#domain_unverified). Deleting the domain entry an assignment was made on, or the space it is assigned to, takes the assignment with it. In the console, assigned addresses are under **Domains → Addresses**, with **Assign address**, **Move** and **Unassign**.
 
 ## What else a space holds
 
@@ -351,11 +423,12 @@ The match is exact, and the page holds one space or none. A space that never got
 await aiinbx.spaces.update(space.id, { name: "Acme Corp" })
 await aiinbx.spaces.update(space.id, { external_id: "cus_9001" })
 await aiinbx.spaces.update(space.id, { external_id: null }) // clears it
+await aiinbx.spaces.update(space.id, { thread_across_addresses: true })
 await aiinbx.spaces.delete(space.id)
 ```
-Only the fields given change, and an update moves nothing. Deleting returns `204` once the space is marked for deletion and its teardown is queued. It immediately stops accepting work and disappears from the API; in the background, its domains come off sending and verification, its mailboxes are disconnected, and its emails, threads, rules and suppressions are removed. There is no undo.
+Only the fields given change, and an update moves nothing. `thread_across_addresses` lets an email without reply headers join any matching conversation in the space, not only one the address it arrived at takes part in; it starts off, and [Threads](threads.md#which-thread-incoming-mail-joins) explains when to turn it on. Deleting returns `204` once the space is marked for deletion and its teardown is queued. It immediately stops accepting work and disappears from the API; in the background, its domains come off sending and verification, its mailboxes are disconnected, and its emails, threads, rules and suppressions are removed. There is no undo.
 
-A wildcard in the space goes with its subdomains, including any filed in _other_ spaces — they are names under its identity, and nothing under it survives it.
+A wildcard in the space goes with its subdomains, including any in _other_ spaces — they are names under its identity, and nothing under it survives it.
 
 ## Routing rules of thumb
 

@@ -4,7 +4,7 @@ description: "Integrating AI Inbx into an app's server code with the TypeScript 
 license: MIT
 metadata:
   author: aiinbx
-  version: "1.0.0"
+  version: "1.1.0"
   homepage: https://docs.aiinbx.com/skills
   source: https://github.com/aiinbx/skills
 ---
@@ -32,7 +32,12 @@ Work these in order. Each step names what to settle and where the details are. R
 **2 — Settle who the mail is from.** One question decides most of what follows: does the product send as itself, or as each of its customers?
 
 - As itself: one domain for the whole product. `<slug>.aiinbx.app` works at once for getting started; a domain of its own before real users. For the records to publish and what verification checks, read `references/guides/domains.md`.
-- As each customer: every customer brings a domain (DNS access) or connects a Gmail or Outlook mailbox (an OAuth grant), and each customer's mail lives in a space of its own. Read `references/guides/spaces.md` first, and `references/guides/mailboxes.md` for connecting accounts. The application enforces which customer may touch which resource; a key reaches all of them.
+- As each customer: each customer's mail lives in a space of its own, and each gets one of these in that space. Read `references/guides/spaces.md` first, and `references/guides/mailboxes.md` for connecting accounts. The application enforces which customer may touch which resource; a key reaches all of them.
+  - The customer brings their own domain (they have DNS access, want their brand and their own reputation): add that domain in the customer's space.
+  - Each customer should get a name of their own, or any number of addresses, without touching DNS per customer: a subdomain under the product's wildcard (`acme.yourapp.com` under `*.yourapp.com`), in the customer's space.
+  - Each customer, or each agent, has one or a few addresses on a domain the product already has (`anna@agents.com`, `bob@agents.com`): assign the single addresses to their spaces with `addresses.assign`.
+  - The customer answers from an existing Gmail or Outlook account: connect the mailbox into the customer's space.
+  - Several addresses of one space write to the same contacts (a sales or outreach team): turn on `thread_across_addresses` for that space.
 
 **3 — Install and connect.** `npm install aiinbx` or `pip install aiinbx`. One shared client in server code; both SDKs read `AI_INBX_API_KEY` from the environment. For client options, pagination, error classes and types, read `references/sdks/typescript.md` or `references/sdks/python.md`. For a framework's own shape, read `references/integrations/nextjs.md` or `references/integrations/hono.md`.
 
@@ -70,6 +75,7 @@ When text is generated, save it before sending: a retry that generates different
 - **Python names the sender `from_`**, because `from` is a keyword, and responses are dicts: `email["thread_id"]`.
 - **A parsed body breaks the signature.** Next.js Pages Router, Express `json()` and Hono's `c.req.json()` change the bytes. Use the App Router `Request`, a raw body parser, or `c.req.raw`.
 - **`listen` deliveries carry the summary body.** `data.email` is only on registered endpoints created with `payload: "full"`; read the email by `data.email_id`.
+- **Mail between the app's own addresses arrives.** One agent of the app writing to another produces an `email.received` like any other; decide in the handler whether mail from the app's own addresses gets an answer, or two agents answer each other.
 - **A reply can have nobody to go to.** When the email being answered asks for replies at one of the app's own addresses, `threads.reply` fails with `no_recipients`; pass `to`.
 - **The provided domain is capped**, 10 emails a day to one recipient among other limits. A test that fails is not fixed by sending again. Read `references/guides/pacing.md`.
 - **`402` is the plan, not a bug.** `plan_required` and `allowance_reached` need the user; retrying does not help. For every error code, read `references/reference/errors.md`.

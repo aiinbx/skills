@@ -4,7 +4,7 @@ description: "First-time AI Inbx setup — install the `aiinbx` CLI, sign in, pu
 license: MIT
 metadata:
   author: aiinbx
-  version: "1.0.0"
+  version: "1.1.0"
   homepage: https://docs.aiinbx.com/skills
   source: https://github.com/aiinbx/skills
 ---
@@ -135,7 +135,7 @@ Scope the first pass before handing over, and say the scope out loud so a small 
 - one webhook route that verifies the signature and handles `email.received`
 - one reply in the thread when the app holds conversations
 
-Everything else waits for a second pass: a durable queue for events, a domain of their own, a registered production endpoint, review of drafts by a person, per-customer senders.
+Everything else waits for a second pass: a durable queue for events, a domain of their own, a registered production endpoint, review of drafts by a person, per-customer senders (step 2 of `aiinbx-integrate` says which to give each customer: their own domain, a subdomain under a wildcard, or single addresses assigned to their space).
 
 An app that only sends skips the webhook route and the reply. Phase 5 then ends at the delivery.
 

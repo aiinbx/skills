@@ -85,6 +85,18 @@ for await (const message of aiinbx.threads.iterateMessages("thr_...", {
 for message in client.threads.iter_messages("thr_..."):
     print(message["snippet"])
 ```
+## Which thread incoming mail joins
+
+An email that carries reply headers — `In-Reply-To` or `References` naming a message AI Inbx holds in the same space — joins that message's thread. That is how every mail client answers, and it holds whichever of your addresses the answer arrives at.
+
+An email without them — a client that drops the headers, a forward written as a new message — can still join a conversation on a guess: the same people, a subject that matches, text that quotes what was said before. A guess only joins a thread the address the email arrived at already takes part in: it sent in the thread, received in it, or was the Reply-To of something sent there. A reply that comes back to your `support@` because a send from `dana@` set it as Reply-To joins that send's thread; mail to `sales@` does not join a conversation only `support@` is in, and opens a thread of its own.
+
+Turn on `thread_across_addresses` when several of your addresses write to the same contacts in the same conversations, and a guess may then join any matching thread. Each space has its own switch, set with `spaces.create` or `spaces.update` or on the space in the console; the workspace's, on `PATCH /workspace` or in the console's workspace settings, governs mail outside spaces. Both start off.
+
+```ts
+await aiinbx.spaces.update("spc_...", { thread_across_addresses: true })
+await aiinbx.workspaces.update({ thread_across_addresses: true })
+```
 ## Replying
 
 This is the call the API exists for. Give it the thread and the content; the sender, recipients, subject, and the `In-Reply-To` and `References` headers are derived from the conversation:

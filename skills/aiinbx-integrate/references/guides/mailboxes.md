@@ -133,7 +133,7 @@ const { url } = await aiinbx.mailboxes.connect({
 
 The return carries the same query as a connect link, and the same rule applies: wait for `mailbox.connected` rather than trusting the redirect. A URL that has expired or been used fails with [`expired_state`](../reference/errors.md#expired_state) — as a JSON `400` on our callback page, not as a redirect: what knew the `return_to` is gone with it. Creating connection URLs requires a `full` [scope](https://docs.aiinbx.com/authentication.md#scopes) key.
 
-`space_id` is the reason a platform uses this path: it is the only one of the three that can put the mailbox in a [space](spaces.md). The hosted page and a connect link are opened with no credential, so they cannot take a space — anyone could file a mailbox into another customer's. A mailbox lands in a space only through this call, which binds the space to the URL it returns. So a platform mints the connect URL server-side, per customer, and never hands out the bare hosted link.
+`space_id` is the reason a platform uses this path: it is the only one of the three that can put the mailbox in a [space](spaces.md). The hosted page and a connect link are opened with no credential, so they cannot take a space — anyone could put a mailbox into another customer's. A mailbox lands in a space only through this call, which binds the space to the URL it returns. So a platform mints the connect URL server-side, per customer, and never hands out the bare hosted link.
 
 ### Ref and metadata
 

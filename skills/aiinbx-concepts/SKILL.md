@@ -1,10 +1,10 @@
 ---
 name: aiinbx-concepts
-description: "Understanding AI Inbx's objects before acting on them — what makes an address one the workspace can send from (a domain or a connected mailbox), how an email relates to its thread, what a send response and an event each prove, why a recipient can be dropped or a message held, and how spaces keep each customer's mail apart. Load before designing or changing an AI Inbx integration, or when an email, thread or event does not behave as expected."
+description: "Understanding AI Inbx's objects before acting on them — what makes an address one the workspace can send from (a domain or a connected mailbox), how an email relates to its thread, what a send response and an event each prove, why a recipient can be dropped or a message held, and how spaces keep each customer's mail apart, by domain or by single address. Load before designing or changing an AI Inbx integration, or when an email, thread or event does not behave as expected."
 license: MIT
 metadata:
   author: aiinbx
-  version: "1.0.0"
+  version: "1.1.0"
   homepage: https://docs.aiinbx.com/skills
   source: https://github.com/aiinbx/skills
 ---
@@ -56,9 +56,16 @@ Pacing rule (pace_) -> hours or a rate limit; holds mail it matches
 
 Grouping by customer:
 Space (spc_)
-- owns domains and mailboxes, and through them their emails and threads
-- an email is in the space of the domain or mailbox it went through
+- owns domains, mailboxes and assigned addresses, and through them their emails and threads
+- an email is in the space of the address it went through when that address is
+  assigned to one, else of its domain or mailbox
+- thread_across_addresses: off by default (also on the workspace)
 - space_id: null is the workspace itself
+Address (assigned)
+- one address of a verified domain, assigned to a space of its own: addresses.assign / list / remove
+- no DNS, no verification: the domain still signs and carries its mail
+- most specific wins: the address, else its untagged address (anna+orders@ -> anna@), else the domain
+- assigning again moves it from its next email on; mail it already has stays where it was
 
 From call to conversation:
 emails.send --> Email (outbound) + Thread
@@ -78,7 +85,8 @@ Most mistakes come from reading more into a signal than it says.
 
 ## Rules that hold everywhere
 
-- A thread is found for inbound mail from its reply headers and its quoted content. A shared subject alone never merges two conversations.
+- A thread is found for inbound mail from its reply headers and its quoted content. A shared subject alone never merges two conversations. A real reply always joins its thread; mail without reply headers joins by a guess only a thread the address it arrived at already takes part in, unless `thread_across_addresses` is on for its space, which lets the guess join any thread of that space.
+- Mail between two of the workspace's own addresses arrives: the receiver gets an email of its own, with its own `email_id` and its own `email.received`. In one space it shares a thread with the sent email; across two spaces each is in a thread of its own space. A reply goes out from the address the mail arrived at.
 - A reply needs a thread AI Inbx holds. Mail it has never seen is answered with `emails.send` and `in_reply_to`.
 - IDs are prefixed, opaque and stable. An ID of the wrong type is refused.
 - Lists are paginated; a thread's messages paginate separately from the list of threads.
@@ -105,7 +113,7 @@ For suppression lists and unsubscribe, read `references/guides/suppressions.md`.
 
 For pacing rules, held mail and the provided domain's ceilings, read `references/guides/pacing.md`.
 
-For spaces — when a product needs them and how mail finds its space, read `references/guides/spaces.md`.
+For spaces — when a product needs them, how mail finds its space, which to give each customer (their own domain, a subdomain under a wildcard, or single assigned addresses) and `thread_across_addresses`, read `references/guides/spaces.md`.
 
 For attachments — sending files and reading prepared text, read `references/guides/attachments.md`.
 

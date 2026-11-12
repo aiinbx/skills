@@ -136,9 +136,9 @@ Sending hours, rate limits, and releasing held mail by hand.
 
 ### Space
 
-Optional. A group inside the workspace — one per customer, typically — that owns domains and mailboxes, and with them every email and thread that went through those. Pacing rules and suppression lists can be put in a space too, and then reach that space alone. Sending reputation is kept per space as well, so one customer's bounces never pause another's mail. API keys and webhook endpoints are workspace-wide.
+Optional. A group inside the workspace — one per customer, typically — that owns domains, mailboxes and single addresses assigned to it, and with them every email and thread that went through those. Pacing rules and suppression lists can be put in a space too, and then reach that space alone. Sending reputation is kept per space as well, so one customer's bounces never pause another's mail. API keys and webhook endpoints are workspace-wide.
 
-Mail is never told its space: an email is in the space of the domain or mailbox it went through, and a reply is in its thread's. Any space-aware resource created without a space belongs to the workspace itself and reads `space_id: null`.
+Mail is never told its space: an email is in the space of the address it went through when that address is [assigned to one](guides/spaces.md#single-addresses-of-one-domain), else of its domain or mailbox, and a reply is in its thread's. Any space-aware resource created without a space belongs to the workspace itself and reads `space_id: null`.
 
 ```
 spc_… → name

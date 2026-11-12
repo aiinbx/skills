@@ -42,6 +42,8 @@ if (event.type === "email.received") {
 ```
 Every address of yours a message reaches is in exactly one `email.received`. Mail servers can deliver one message in several rounds — a blind copy often travels on its own — so when the same email reaches another address of yours later, the event is sent again with the same `email_id` and only the new addresses in `delivered_to`. A handler that acts once per email deduplicates on `email_id`; one that acts per address handles each event as it comes. The email itself lists them all in its own `delivered_to`.
 
+Mail one of your addresses sends to another of yours arrives too. It is two emails: the one you sent, and the one received, with its own `email_id`, its own `email.received` and the same `message_id`. In one space they share a thread; across two spaces each is in a thread of its own space. An agent that answers every email it receives will answer another agent of yours the same way, so decide in your handler whether mail from your own addresses gets a reply.
+
 > [!TIP]
 > Gate on `category === "human"` before letting an agent reply. Without it, an out-of-office autoresponder and your bot will happily talk to each other.
 

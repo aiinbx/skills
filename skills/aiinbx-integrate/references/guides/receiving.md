@@ -23,7 +23,7 @@ Both land in the same place: a thread, and an [`email.received`](../webhooks/eve
 
 Add the `INBOUND` MX record from the domain's `records` array and verify the domain — that's the whole setup. Whose domain it is doesn't matter to the API; if it's a customer's, you show them the records and they publish them. See [Domains](domains.md) for the record set and how verification works.
 
-Once the MX record resolves, mail to any address on the domain is accepted, parsed, threaded, and delivered to your [webhook endpoints](../webhooks.md).
+Once the MX record resolves, mail to any address on the domain is accepted, parsed, threaded, and delivered to your [webhook endpoints](../webhooks.md). It lands in the domain's [space](spaces.md), or in the space of the address it was sent to when that address is [assigned to one of its own](spaces.md#single-addresses-of-one-domain).
 
 > [!TIP]
 > **Plus addressing**

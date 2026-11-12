@@ -69,7 +69,7 @@ Adding the same identity twice in one space fails with `409` [`domain_taken`](..
 
 ### Spaces
 
-`space_id` puts the domain in a [space](spaces.md), and with it every email and thread that goes through the domain from then on. Omit it and the domain belongs to the workspace itself, `space_id: null`. There is no move afterwards; a space is decided when the domain is created.
+`space_id` puts the domain in a [space](spaces.md), and with it every email and thread that goes through the domain from then on. Omit it and the domain belongs to the workspace itself, `space_id: null`. There is no move afterwards; a space is decided when the domain is created. A single address on the domain can still be [assigned to a space of its own](spaces.md#single-addresses-of-one-domain), so one domain can carry addresses of several customers.
 
 ## The records
 
@@ -158,7 +158,7 @@ The classic breaking finding is two SPF records on the same name — receivers t
 
 ## Wildcards and subdomains
 
-A wildcard — `*.saas.com` — is one domain that covers every subdomain. Publish its records once and `anything.saas.com` can send and receive, without touching DNS again. It is how a platform hands each customer an address of their own.
+A wildcard — `*.saas.com` — is one domain that covers every subdomain. Publish its records once and `anything.saas.com` can send and receive, without touching DNS again. It is how a platform hands each customer a name of their own, with any number of addresses under it. When each customer, or each agent, has one or a few addresses on a domain you already have, [assign those addresses](spaces.md#single-addresses-of-one-domain) to their spaces instead — see [Which to give each customer](spaces.md#which-to-give-each-customer).
 
 ```ts
 const wildcard = await aiinbx.domains.create({ name: "*.saas.com" })
